@@ -3,9 +3,11 @@
    Hand-coded custom card, nessuna libreria di card esterna. */
 
 const WEATHER_ENTITY = 'weather.forecast_casa_carestiato';
-const PERSON_ENTITY = 'person.casacarestiato';
 const ANNOUNCE_SCRIPT = 'script.announce_su_alexa';
 const GATE_ENTITY = 'switch.cancellone';
+const SUN_ENTITY = 'sun.sun';
+const SUN_NEXT_SETTING = 'sensor.sun_next_setting';
+const SUN_NEXT_RISING = 'sensor.sun_next_rising';
 
 const WEATHER_ICONS = {
   'clear-night': 'mdi:weather-night', 'cloudy': 'mdi:weather-cloudy', 'exceptional': 'mdi:alert-circle-outline',
@@ -54,7 +56,6 @@ const SPEAKERS = [
 
 const TVS = [
   { name: 'TV Soggiorno', sub: 'Voce Alexa integrata', icon: 'mdi:television-speaker', entity: 'media_player.nicolo_s_2021_samsung_qled_tv_w_far_field_voice', controllable: true },
-  { name: 'TV Samsung 65"', sub: 'DLNA', icon: 'mdi:television', entity: 'media_player.samsung_65_tv', controllable: false },
   { name: 'TV Pluriuso 55"', sub: 'DLNA', icon: 'mdi:television', entity: 'media_player.tv_tv_pluriuso_55', controllable: false },
 ];
 
@@ -66,8 +67,21 @@ const UPDATE_ENTITIES = [
   'update.hacs_update', 'update.matter_server_update',
 ];
 
+const PRINTER_STATE = 'sensor.hp_laserjet_mfp_m28_m31';
 const PRINTER_TONER = 'sensor.hp_laserjet_mfp_m28_m31_black_cartridge_hp_cf244a';
 const BACKUP_LAST = 'sensor.backup_last_successful_automatic_backup';
+
+const PRINTER_LABELS = { idle: 'Inattiva', printing: 'In stampa', stopped: 'Ferma' };
+
+function relTime(iso) {
+  if (!iso) return '--';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'ora';
+  if (mins < 60) return `${mins} min fa`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} h fa`;
+  return `${Math.round(hours / 24)} g fa`;
+}
 
 function fmtMMSS(totalSeconds) {
   const s = Math.max(0, Math.round(totalSeconds));
@@ -148,8 +162,6 @@ button { all: unset; cursor: pointer; }
 .chip.ok ha-icon { color:#34c759; }
 .chip.warn { color:#ffd60a; border-color:rgba(255,214,10,0.35); }
 .chip.warn ha-icon { color:#ffd60a; }
-.chip.away ha-icon, .chip.away { color:rgba(233,235,238,0.45); }
-.chip.home ha-icon, .chip.home { color:#34c759; }
 
 .clockbox { text-align:right; flex-shrink:0; }
 .clock { font-size:26px; font-weight:700; line-height:1; letter-spacing:1px; color:#f3f2ef; }
@@ -193,7 +205,10 @@ button { all: unset; cursor: pointer; }
 .energy-stats { flex:1; min-width:0; }
 .energy-total-kwh { font-size:11px; color:rgba(233,235,238,0.55); }
 .energy-total-kwh b { color:#c9a869; font-weight:700; }
-.energy-legend { display:grid; grid-template-columns:1fr 1fr; gap:2px 10px; margin-top:8px; flex:1; align-content:space-evenly; min-height:0; overflow:hidden; }
+.energy-legend { display:grid; grid-template-columns:1fr 1fr; gap:2px 10px; margin-top:6px; flex:1; align-content:space-evenly; min-height:0; overflow:hidden; }
+.spark-wrap { margin-top:6px; flex-shrink:0; }
+.spark-wrap svg { width:100%; height:24px; display:block; }
+.spark-label { font-size:8px; color:rgba(233,235,238,0.32); text-transform:uppercase; letter-spacing:.6px; margin-top:2px; display:flex; justify-content:space-between; }
 .el-row { display:flex; align-items:center; gap:5px; font-size:10px; color:rgba(233,235,238,0.6); }
 .el-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 .el-name { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -243,7 +258,7 @@ button { all: unset; cursor: pointer; }
 .tv-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
 
 /* ---------- AZIONI ---------- */
-.actions-panel { flex:1; }
+.actions-panel { flex:0.85; }
 .gate-status { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.4); text-align:center; margin-bottom:8px; flex-shrink:0; }
 .gate-status.busy { color:#ffd60a; }
 .action-btn {
@@ -261,8 +276,19 @@ button { all: unset; cursor: pointer; }
 .action-btn.gate.busy { background: rgba(255,214,10,0.15); border-color: rgba(255,214,10,0.5); }
 .action-btn.offall { border-color: rgba(201,168,105,0.3); }
 .action-btn.offall ha-icon { color:#c9a869; }
-.action-btn.night { border-color: rgba(94,92,230,0.3); }
-.action-btn.night ha-icon { color:#8f8dff; }
+
+/* ---------- SISTEMA ---------- */
+.system-panel { flex:1.15; }
+.sys-list { display:flex; flex-direction:column; gap:4px; flex:1; justify-content:space-evenly; min-height:0; }
+.sys-row { display:flex; align-items:center; gap:8px; }
+.sys-row ha-icon { --mdc-icon-size:15px; color:rgba(233,235,238,0.5); flex-shrink:0; }
+.sys-info { flex:1; min-width:0; }
+.sys-label { font-size:10.5px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sys-sub { font-size:8.5px; color:rgba(233,235,238,0.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sys-val { font-size:10.5px; font-weight:700; color:rgba(233,235,238,0.65); flex-shrink:0; }
+.sys-val.ok { color:#34c759; }
+.sys-val.warn { color:#ffd60a; }
+.sys-val.danger { color:#ff453a; }
 
 /* ---------- modale conferma cancello ---------- */
 .modal-overlay {
@@ -301,6 +327,9 @@ class CasaDashboardCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._built = false;
     this._gatePulseUntil = 0;
+    this._lastTotalPower = 0;
+    this._powerHistory = [];
+    this._historyTicks = 0;
     this._onResize = () => this._syncHeight();
   }
 
@@ -393,6 +422,12 @@ class CasaDashboardCard extends HTMLElement {
                   <div class="energy-legend" id="energy-legend"></div>
                 </div>
               </div>
+              <div class="spark-wrap">
+                <svg viewBox="0 0 200 40" preserveAspectRatio="none">
+                  <polyline id="power-spark" fill="none" stroke="#c9a869" stroke-width="2" points=""></polyline>
+                </svg>
+                <div class="spark-label"><span>Storico rapido</span><span id="spark-range">ultimi 5 min</span></div>
+              </div>
             </div>
             <div class="panel cover-panel">
               <div class="panel-title"><ha-icon icon="mdi:blinds-horizontal"></ha-icon>Coperture</div>
@@ -471,11 +506,35 @@ class CasaDashboardCard extends HTMLElement {
                 <span>Tutto Spento</span>
                 <small>Spegne tutte le luci</small>
               </button>
-              <button class="action-btn night" data-action="goodnight">
-                <ha-icon icon="mdi:weather-night"></ha-icon>
-                <span>Buonanotte</span>
-                <small>Luci off + tende chiuse</small>
-              </button>
+            </div>
+            <div class="panel system-panel">
+              <div class="panel-title"><ha-icon icon="mdi:server"></ha-icon>Sistema</div>
+              <div class="sys-list">
+                <div class="sys-row">
+                  <ha-icon icon="mdi:cloud-download-outline"></ha-icon>
+                  <div class="sys-info">
+                    <div class="sys-label">Aggiornamenti</div>
+                    <div class="sys-sub">Core, add-on, firmware</div>
+                  </div>
+                  <div class="sys-val mono" id="sys-updates">--</div>
+                </div>
+                <div class="sys-row">
+                  <ha-icon icon="mdi:printer-outline"></ha-icon>
+                  <div class="sys-info">
+                    <div class="sys-label">Stampante</div>
+                    <div class="sys-sub" id="sys-printer-state">--</div>
+                  </div>
+                  <div class="sys-val mono" id="sys-toner">--</div>
+                </div>
+                <div class="sys-row">
+                  <ha-icon icon="mdi:backup-restore"></ha-icon>
+                  <div class="sys-info">
+                    <div class="sys-label">Backup</div>
+                    <div class="sys-sub" id="sys-backup-sub">--</div>
+                  </div>
+                  <div class="sys-val mono" id="sys-backup-val">--</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -560,10 +619,6 @@ class CasaDashboardCard extends HTMLElement {
       case 'all-off':
         this._hass.callService('homeassistant', 'turn_off', { entity_id: ALL_OFF_TARGETS });
         break;
-      case 'goodnight':
-        this._hass.callService('homeassistant', 'turn_off', { entity_id: ALL_OFF_TARGETS });
-        this._hass.callService('cover', 'close_cover', { entity_id: COVERS.map(c => c.entity) });
-        break;
       case 'more-info':
         this._fireMoreInfo(entity);
         break;
@@ -584,6 +639,26 @@ class CasaDashboardCard extends HTMLElement {
     if (dateEl) dateEl.textContent = now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
     this._updateTimers();
     this._updateGate();
+    this._historyTicks++;
+    if (this._historyTicks % 5 === 0) {
+      this._powerHistory.push(this._lastTotalPower);
+      if (this._powerHistory.length > 60) this._powerHistory.shift();
+      this._renderSparkline();
+    }
+  }
+
+  _renderSparkline() {
+    const line = this.shadowRoot.getElementById('power-spark');
+    if (!line) return;
+    const data = this._powerHistory;
+    if (data.length < 2) { line.setAttribute('points', ''); return; }
+    const max = Math.max(POWER_SCALE_MAX * 0.15, ...data);
+    const points = data.map((v, i) => {
+      const x = (i / (data.length - 1)) * 200;
+      const y = 38 - (Math.min(v, max) / max) * 36;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    line.setAttribute('points', points);
   }
 
   _updateGate() {
@@ -650,18 +725,24 @@ class CasaDashboardCard extends HTMLElement {
     const states = this._hass.states;
     const sh = this.shadowRoot;
 
-    /* ---- ticker: presenza, meteo, alert ---- */
+    /* ---- ticker: meteo, sole, alert ---- */
     const chips = [];
-    const person = states[PERSON_ENTITY];
-    if (person) {
-      const home = person.state === 'home';
-      chips.push(`<div class="chip ${home ? 'home' : 'away'}"><ha-icon icon="${home ? 'mdi:home-account' : 'mdi:home-export-outline'}"></ha-icon>${home ? 'In casa' : 'Fuori casa'}</div>`);
-    }
     const wx = states[WEATHER_ENTITY];
     if (wx) {
       const icon = WEATHER_ICONS[wx.state] || 'mdi:weather-partly-cloudy';
       const temp = wx.attributes.temperature !== undefined ? `${Math.round(wx.attributes.temperature)}°` : '--';
       chips.push(`<div class="chip"><ha-icon icon="${icon}"></ha-icon>${temp}</div>`);
+    }
+    const sun = states[SUN_ENTITY];
+    if (sun) {
+      const aboveHorizon = sun.state === 'above_horizon';
+      const nextEvent = states[aboveHorizon ? SUN_NEXT_SETTING : SUN_NEXT_RISING];
+      if (nextEvent) {
+        const t = new Date(nextEvent.state).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        const icon = aboveHorizon ? 'mdi:weather-sunset-down' : 'mdi:weather-sunset-up';
+        const label = aboveHorizon ? 'Tramonto' : 'Alba';
+        chips.push(`<div class="chip"><ha-icon icon="${icon}"></ha-icon>${label} ${t}</div>`);
+      }
     }
     const updatesOn = UPDATE_ENTITIES.filter(id => states[id] && states[id].state === 'on').length;
     if (updatesOn > 0) {
@@ -738,6 +819,36 @@ class CasaDashboardCard extends HTMLElement {
       gaugeFill.style.strokeDasharray = `${circumference}`;
       gaugeFill.style.strokeDashoffset = `${circumference * (1 - pct)}`;
       gaugeFill.style.stroke = pct > 0.85 ? '#ff453a' : '#c9a869';
+    }
+    this._lastTotalPower = total;
+
+    /* ---- sistema ---- */
+    const sysUpdatesEl = sh.getElementById('sys-updates');
+    if (sysUpdatesEl) {
+      const n = UPDATE_ENTITIES.filter(id => states[id] && states[id].state === 'on').length;
+      sysUpdatesEl.textContent = n > 0 ? `${n}` : 'OK';
+      sysUpdatesEl.className = `sys-val mono ${n > 0 ? 'warn' : 'ok'}`;
+    }
+    const printerSt = states[PRINTER_STATE];
+    const tonerSt = states[PRINTER_TONER];
+    const printerStateEl = sh.getElementById('sys-printer-state');
+    const tonerEl = sh.getElementById('sys-toner');
+    if (printerStateEl) printerStateEl.textContent = printerSt ? (PRINTER_LABELS[printerSt.state] || printerSt.state) : '--';
+    if (tonerEl) {
+      const toner = tonerSt ? safeNum(tonerSt) : null;
+      tonerEl.textContent = toner !== null ? `${toner.toFixed(0)}%` : '--';
+      tonerEl.className = `sys-val mono ${toner !== null && toner <= 10 ? 'danger' : toner !== null && toner <= 30 ? 'warn' : 'ok'}`;
+    }
+    const backupSt = states[BACKUP_LAST];
+    const backupSubEl = sh.getElementById('sys-backup-sub');
+    const backupValEl = sh.getElementById('sys-backup-val');
+    if (backupSt) {
+      const configured = backupSt.state !== 'unknown';
+      if (backupSubEl) backupSubEl.textContent = configured ? 'Ultimo backup' : 'Non configurato';
+      if (backupValEl) {
+        backupValEl.textContent = configured ? relTime(backupSt.state) : '--';
+        backupValEl.className = `sys-val mono ${configured ? 'ok' : 'warn'}`;
+      }
     }
 
     /* ---- audio: speaker Alexa ---- */
