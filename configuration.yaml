@@ -1,0 +1,6 @@
+lovelace:
+  dashboards:
+    casa-control:
+      mode: yaml
+      title: Casa Carestiato
+      filename: dashboards/casa.yaml

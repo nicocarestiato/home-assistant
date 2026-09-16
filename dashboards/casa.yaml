@@ -1,0 +1,10 @@
+title: Casa Carestiato
+theme: Casa Carestiato
+views:
+  - title: Casa
+    path: casa
+    theme: "Casa Carestiato"
+    type: panel
+    icon: mdi:home-automation
+    cards:
+      - type: custom:casa-dashboard-card
