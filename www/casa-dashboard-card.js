@@ -193,7 +193,7 @@ button { all: unset; cursor: pointer; }
 .light-progress.warn { background:#ff453a; }
 
 /* ---------- ENERGIA ---------- */
-.energy-panel { flex: 1.2; }
+.col > .energy-panel { flex: 1.2; }
 .energy-top { display:flex; align-items:center; gap:14px; }
 .gauge-wrap { position:relative; width:82px; height:82px; flex-shrink:0; }
 .gauge-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
@@ -215,7 +215,7 @@ button { all: unset; cursor: pointer; }
 .el-val { font-weight:700; color:#e9ebee; }
 
 /* ---------- COPERTURE ---------- */
-.cover-panel { flex:1; }
+.col > .cover-panel { flex:1; }
 .cover-list { display:flex; flex-direction:column; gap:6px; flex:1; justify-content:space-evenly; min-height:0; }
 .cover-row { display:flex; flex-direction:column; gap:4px; }
 .cover-head { display:flex; align-items:center; gap:7px; }
@@ -231,7 +231,7 @@ button { all: unset; cursor: pointer; }
 .cover-btns button ha-icon { --mdc-icon-size:12px; color:#e9ebee; }
 
 /* ---------- AUDIO & TV ---------- */
-.audio-panel { flex:1.3; }
+.col > .audio-panel { flex:1.3; }
 .spk-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
 .spk-row { display:flex; align-items:center; gap:8px; padding:4px 2px; border-radius:10px; }
 .spk-row.unavail { opacity:.4; pointer-events:none; }
@@ -258,19 +258,19 @@ button { all: unset; cursor: pointer; }
 .tv-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
 
 /* ---------- AZIONI ---------- */
-.actions-panel { flex:0.85; }
-.gate-status { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.4); text-align:center; margin-bottom:8px; flex-shrink:0; }
+.col > .actions-panel { flex:1.1; }
+.gate-status { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.4); text-align:center; margin-bottom:10px; flex-shrink:0; }
 .gate-status.busy { color:#ffd60a; }
+.action-btn-group { display:flex; flex-direction:column; gap:12px; flex:1; min-height:0; }
 .action-btn {
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; text-align:center;
-  padding:10px 8px; border-radius:14px; margin-bottom:8px; flex:1; min-height:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center;
+  padding:16px 12px; border-radius:14px; flex:1; min-height:78px;
   background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); transition:.2s ease;
 }
-.action-btn:last-child { margin-bottom:0; }
 .action-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
-.action-btn ha-icon { --mdc-icon-size:22px; color:#e9ebee; }
-.action-btn span { font-size:11.5px; font-weight:700; color:#f3f2ef; }
-.action-btn small { font-size:8.5px; color:rgba(233,235,238,0.4); line-height:1.2; }
+.action-btn ha-icon { --mdc-icon-size:24px; color:#e9ebee; flex-shrink:0; }
+.action-btn span { font-size:12.5px; font-weight:700; color:#f3f2ef; }
+.action-btn small { font-size:9.5px; font-weight:600; color:rgba(233,235,238,0.45); line-height:1.35; max-width:92%; }
 .action-btn.gate { border-color: rgba(255,69,58,0.3); }
 .action-btn.gate ha-icon { color:#ff6b60; }
 .action-btn.gate.busy { background: rgba(255,214,10,0.15); border-color: rgba(255,214,10,0.5); }
@@ -278,7 +278,7 @@ button { all: unset; cursor: pointer; }
 .action-btn.offall ha-icon { color:#c9a869; }
 
 /* ---------- SISTEMA ---------- */
-.system-panel { flex:1.15; }
+.col > .system-panel { flex:0.9; }
 .sys-list { display:flex; flex-direction:column; gap:4px; flex:1; justify-content:space-evenly; min-height:0; }
 .sys-row { display:flex; align-items:center; gap:8px; }
 .sys-row ha-icon { --mdc-icon-size:15px; color:rgba(233,235,238,0.5); flex-shrink:0; }
@@ -496,16 +496,18 @@ class CasaDashboardCard extends HTMLElement {
             <div class="panel actions-panel">
               <div class="panel-title"><ha-icon icon="mdi:console"></ha-icon>Azioni Rapide</div>
               <div class="gate-status" id="gate-status">CANCELLO · PRONTO</div>
-              <button class="action-btn gate" id="gate-btn" data-action="gate-request">
-                <ha-icon icon="mdi:gate"></ha-icon>
-                <span>Apri Cancello</span>
-                <small>Impulso sicuro + annuncio vocale</small>
-              </button>
-              <button class="action-btn offall" data-action="all-off">
-                <ha-icon icon="mdi:power"></ha-icon>
-                <span>Tutto Spento</span>
-                <small>Spegne tutte le luci</small>
-              </button>
+              <div class="action-btn-group">
+                <button class="action-btn gate" id="gate-btn" data-action="gate-request">
+                  <ha-icon icon="mdi:gate"></ha-icon>
+                  <span>Apri Cancello</span>
+                  <small>Impulso sicuro + annuncio vocale</small>
+                </button>
+                <button class="action-btn offall" data-action="all-off">
+                  <ha-icon icon="mdi:power"></ha-icon>
+                  <span>Tutto Spento</span>
+                  <small>Spegne tutte le luci</small>
+                </button>
+              </div>
             </div>
             <div class="panel system-panel">
               <div class="panel-title"><ha-icon icon="mdi:server"></ha-icon>Sistema</div>
