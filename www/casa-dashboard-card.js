@@ -181,11 +181,11 @@ button { all: unset; cursor: pointer; }
 .col > .panel { flex:1; min-height:0; }
 
 /* ---------- ZONE / luci ---------- */
-.light-list { display:flex; flex-direction:column; gap:2px; flex:1; justify-content:space-evenly; min-height:0; overflow:hidden; }
-.light-row { position:relative; display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:10px; overflow:hidden; transition:background .15s; }
+.light-list { display:flex; flex-direction:column; gap:6px; flex:1; min-height:0; overflow:hidden; }
+.light-row { position:relative; display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:12px; overflow:hidden; transition:background .15s; flex:1; }
 .light-row:hover { background: rgba(255,255,255,0.065); }
-.light-badge { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background: color-mix(in srgb, var(--c) 22%, transparent); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); }
-.light-badge ha-icon { --mdc-icon-size:15px; color: var(--c); }
+.light-badge { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background: color-mix(in srgb, var(--c) 22%, transparent); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.light-badge ha-icon { --mdc-icon-size:18px; color: var(--c); }
 .light-row.on .light-badge { background: var(--c); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 60%, transparent); }
 .light-row.on .light-badge ha-icon { color:#0b0d10; }
 .light-info { flex:1; min-width:0; }
@@ -203,7 +203,7 @@ button { all: unset; cursor: pointer; }
 /* ---------- ENERGIA ---------- */
 .col > .energy-panel { flex: 1.2; }
 .energy-top { display:flex; align-items:center; gap:14px; }
-.gauge-wrap { position:relative; width:82px; height:82px; flex-shrink:0; }
+.gauge-wrap { position:relative; width:108px; height:108px; flex-shrink:0; }
 .gauge-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
 .gauge-bg { fill:none; stroke:rgba(255,255,255,0.11); stroke-width:8; }
 .gauge-fill { fill:none; stroke:#c9a869; stroke-width:8; stroke-linecap:round; transition: stroke-dashoffset .6s ease, stroke .3s; }
@@ -215,7 +215,7 @@ button { all: unset; cursor: pointer; }
 .energy-total-kwh b { color:#c9a869; font-weight:700; }
 .energy-legend { display:grid; grid-template-columns:1fr 1fr; gap:2px 10px; margin-top:6px; flex:1; align-content:space-evenly; min-height:0; overflow:hidden; }
 .spark-wrap { margin-top:6px; flex-shrink:0; }
-.spark-wrap svg { width:100%; height:24px; display:block; }
+.spark-wrap svg { width:100%; height:38px; display:block; }
 .spark-label { font-size:9px; color:rgba(233,235,238,0.42); text-transform:uppercase; letter-spacing:.6px; margin-top:2px; display:flex; justify-content:space-between; }
 .el-row { display:flex; align-items:center; gap:5px; font-size:11.5px; color:rgba(233,235,238,0.68); }
 .el-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
@@ -224,46 +224,46 @@ button { all: unset; cursor: pointer; }
 
 /* ---------- COPERTURE ---------- */
 .col > .cover-panel { flex:1; }
-.cover-list { display:flex; flex-direction:column; gap:6px; flex:1; justify-content:space-evenly; min-height:0; }
-.cover-row { display:flex; flex-direction:column; gap:4px; }
-.cover-head { display:flex; align-items:center; gap:7px; }
-.cover-head ha-icon { --mdc-icon-size:14px; color:rgba(233,235,238,0.65); }
-.cover-name { font-size:13px; font-weight:700; color:#f3f2ef; flex:1; }
-.cover-state { font-size:11.5px; color:rgba(233,235,238,0.55); }
-.cover-body { display:flex; align-items:center; gap:8px; }
-.cover-bar { flex:1; height:6px; border-radius:4px; background:rgba(255,255,255,0.11); overflow:hidden; }
+.cover-list { display:flex; flex-direction:column; gap:10px; flex:1; min-height:0; }
+.cover-row { display:flex; flex-direction:column; justify-content:center; gap:8px; flex:1; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.03); }
+.cover-head { display:flex; align-items:center; gap:9px; }
+.cover-head ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.65); }
+.cover-name { font-size:14px; font-weight:700; color:#f3f2ef; flex:1; }
+.cover-state { font-size:12px; color:rgba(233,235,238,0.55); }
+.cover-body { display:flex; align-items:center; gap:10px; }
+.cover-bar { flex:1; height:10px; border-radius:5px; background:rgba(255,255,255,0.11); overflow:hidden; }
 .cover-fill { height:100%; background: var(--c, #c9a869); transition: width .5s ease; }
-.cover-btns { display:flex; gap:4px; flex-shrink:0; }
-.cover-btns button { width:22px; height:22px; border-radius:6px; background:rgba(255,255,255,0.085); border:1px solid rgba(255,255,255,0.13); display:flex; align-items:center; justify-content:center; }
+.cover-btns { display:flex; gap:6px; flex-shrink:0; }
+.cover-btns button { width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.085); border:1px solid rgba(255,255,255,0.13); display:flex; align-items:center; justify-content:center; }
 .cover-btns button:hover { background:rgba(201,168,105,0.25); }
-.cover-btns button ha-icon { --mdc-icon-size:12px; color:#e9ebee; }
+.cover-btns button ha-icon { --mdc-icon-size:15px; color:#e9ebee; }
 
 /* ---------- SPOTIFY ---------- */
-.spot { display:flex; align-items:center; gap:9px; padding:7px; margin-bottom:6px; border-radius:12px; background:linear-gradient(135deg, rgba(30,215,96,0.14), rgba(30,215,96,0.03)); border:1px solid rgba(30,215,96,0.28); flex-shrink:0; }
-.spot-art { width:44px; height:44px; border-radius:8px; background:rgba(255,255,255,0.085) center/cover no-repeat; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-.spot-art ha-icon { --mdc-icon-size:22px; color:#1ed760; }
+.spot { display:flex; align-items:center; gap:11px; padding:10px; margin-bottom:8px; border-radius:14px; background:linear-gradient(135deg, rgba(30,215,96,0.14), rgba(30,215,96,0.03)); border:1px solid rgba(30,215,96,0.28); flex-shrink:0; }
+.spot-art { width:52px; height:52px; border-radius:10px; background:rgba(255,255,255,0.085) center/cover no-repeat; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.spot-art ha-icon { --mdc-icon-size:26px; color:#1ed760; }
 .spot-art.has-img ha-icon { display:none; }
 .spot-info { flex:1; min-width:0; }
 .spot-title { font-size:13px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .spot-artist { font-size:11px; color:rgba(233,235,238,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .spot-src { margin-top:3px; font-size:10px; font-weight:700; letter-spacing:.4px; color:#1ed760; background:rgba(30,215,96,0.12); border:1px solid rgba(30,215,96,0.3); border-radius:999px; padding:1px 7px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; }
 .spot-btns { display:flex; gap:4px; flex-shrink:0; }
-.spot-btns .icon-btn.main { width:28px; height:28px; background:#1ed760; border-color:#1ed760; }
-.spot-btns .icon-btn.main ha-icon { color:#062b12; --mdc-icon-size:14px; }
+.spot-btns .icon-btn.main { width:34px; height:34px; background:#1ed760; border-color:#1ed760; }
+.spot-btns .icon-btn.main ha-icon { color:#062b12; --mdc-icon-size:16px; }
 
 /* ---------- AUDIO & TV ---------- */
 .col > .audio-panel { flex:1.3; }
-.spk-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
-.spk-row { display:flex; align-items:center; gap:8px; padding:4px 2px; border-radius:10px; }
+.spk-list { display:flex; flex-direction:column; gap:4px; flex:1; min-height:0; }
+.spk-row { display:flex; align-items:center; gap:10px; padding:7px 6px; border-radius:10px; flex:1; }
 .spk-row.unavail { opacity:.4; pointer-events:none; }
-.spk-row > ha-icon { --mdc-icon-size:15px; color:rgba(233,235,238,0.6); flex-shrink:0; }
+.spk-row > ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.6); flex-shrink:0; }
 .spk-info { flex:1; min-width:0; }
 .spk-name { font-size:13px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .spk-sub { font-size:11px; color:rgba(233,235,238,0.52); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .spk-row.playing .spk-sub { color:#34c759; }
-.icon-btn { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.085); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(255,255,255,0.11); }
+.icon-btn { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.085); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(255,255,255,0.11); }
 .icon-btn:hover { background:rgba(201,168,105,0.3); }
-.icon-btn ha-icon { --mdc-icon-size:12px; color:#e9ebee; }
+.icon-btn ha-icon { --mdc-icon-size:14px; color:#e9ebee; }
 
 .announce-row { display:flex; gap:6px; margin:6px 0; flex-shrink:0; }
 .announce-input {
@@ -276,7 +276,7 @@ button { all: unset; cursor: pointer; }
 .announce-btn:hover { background:rgba(201,168,105,0.35); }
 
 .sep { height:1px; background:rgba(255,255,255,0.11); margin:4px 0 6px; flex-shrink:0; }
-.tv-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
+.tv-list { display:flex; flex-direction:column; gap:4px; flex:1; min-height:0; }
 
 /* ---------- AZIONI ---------- */
 .col > .actions-panel { flex:1.1; }
@@ -284,12 +284,12 @@ button { all: unset; cursor: pointer; }
 .gate-status.busy { color:#ffd60a; }
 .action-btn-group { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
 .action-btn {
-  display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:2px; align-content:center; align-items:center; text-align:left;
-  padding:8px 12px; border-radius:14px; flex:1; min-height:0;
+  display:grid; grid-template-columns:auto 1fr; column-gap:12px; row-gap:3px; align-content:center; align-items:center; text-align:left;
+  padding:12px 16px; border-radius:14px; flex:1; min-height:0;
   background: rgba(255,255,255,0.065); border:1px solid rgba(255,255,255,0.13); transition:.2s ease;
 }
 .action-btn:hover { background: rgba(255,255,255,0.11); transform: translateY(-1px); }
-.action-btn ha-icon { --mdc-icon-size:24px; color:#e9ebee; grid-row:1 / span 2; }
+.action-btn ha-icon { --mdc-icon-size:28px; color:#e9ebee; grid-row:1 / span 2; }
 .action-btn span { font-size:14px; font-weight:700; color:#f3f2ef; }
 .action-btn small { font-size:11px; font-weight:600; color:rgba(233,235,238,0.55); line-height:1.3; }
 .action-btn.gate { border-color: rgba(255,69,58,0.3); }
@@ -300,13 +300,13 @@ button { all: unset; cursor: pointer; }
 
 /* ---------- SISTEMA ---------- */
 .col > .system-panel { flex:0.9; }
-.sys-list { display:flex; flex-direction:column; gap:4px; flex:1; justify-content:space-evenly; min-height:0; }
-.sys-row { display:flex; align-items:center; gap:8px; }
-.sys-row ha-icon { --mdc-icon-size:15px; color:rgba(233,235,238,0.6); flex-shrink:0; }
+.sys-list { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
+.sys-row { display:flex; align-items:center; gap:10px; flex:1; padding:6px 8px; border-radius:10px; background:rgba(255,255,255,0.03); }
+.sys-row ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.6); flex-shrink:0; }
 .sys-info { flex:1; min-width:0; }
-.sys-label { font-size:12px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sys-sub { font-size:9.5px; color:rgba(233,235,238,0.52); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sys-val { font-size:12px; font-weight:700; color:rgba(233,235,238,0.72); flex-shrink:0; }
+.sys-label { font-size:12.5px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sys-sub { font-size:10px; color:rgba(233,235,238,0.52); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sys-val { font-size:13px; font-weight:700; color:rgba(233,235,238,0.72); flex-shrink:0; }
 .sys-val.ok { color:#34c759; }
 .sys-val.warn { color:#ffd60a; }
 .sys-val.danger { color:#ff453a; }
