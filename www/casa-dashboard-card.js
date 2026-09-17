@@ -1,4 +1,4 @@
-/* Casa Carestiato — MISSION CONTROL
+/* Casa Carestiato — MISSION CONTROL v3.1
    Plancia di comando a schermata unica (no-scroll), stile HUD/mission-control.
    Hand-coded custom card, nessuna libreria di card esterna. */
 
@@ -54,8 +54,16 @@ const SPEAKERS = [
   { name: 'Ovunque', room: 'Multi-stanza', icon: 'mdi:speaker-multiple', entity: 'media_player.ovunque' },
 ];
 
+const SPOTIFY_ENTITY = 'media_player.spotify_nico';
+/* Dispositivi selezionabili per Spotify Connect (source_list reale dell'entity) */
+const SPOTIFY_DEVICES = [
+  { label: 'Alexa Piano Terra', icon: 'mdi:speaker', source: 'Echo Pop di Nicolò' },
+  { label: 'Alexa Piano Primo', icon: 'mdi:speaker', source: 'Echo Dot di Nicolò' },
+  { label: 'Ovunque', icon: 'mdi:speaker-multiple', source: 'Ovunque' },
+];
+
 const TVS = [
-  { name: 'TV Soggiorno', sub: 'Voce Alexa integrata', icon: 'mdi:television-speaker', entity: 'media_player.nicolo_s_2021_samsung_qled_tv_w_far_field_voice', controllable: true },
+  { name: 'TV Soggiorno 65"', sub: 'Samsung Q80A', icon: 'mdi:television', entity: 'media_player.samsung_65_tv_qe65q80aatxzt', controllable: true },
   { name: 'TV Pluriuso 55"', sub: 'DLNA', icon: 'mdi:television', entity: 'media_player.tv_tv_pluriuso_55', controllable: false },
 ];
 
@@ -230,6 +238,19 @@ button { all: unset; cursor: pointer; }
 .cover-btns button:hover { background:rgba(201,168,105,0.25); }
 .cover-btns button ha-icon { --mdc-icon-size:12px; color:#e9ebee; }
 
+/* ---------- SPOTIFY ---------- */
+.spot { display:flex; align-items:center; gap:9px; padding:7px; margin-bottom:6px; border-radius:12px; background:linear-gradient(135deg, rgba(30,215,96,0.14), rgba(30,215,96,0.03)); border:1px solid rgba(30,215,96,0.28); flex-shrink:0; }
+.spot-art { width:44px; height:44px; border-radius:8px; background:rgba(255,255,255,0.06) center/cover no-repeat; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.spot-art ha-icon { --mdc-icon-size:22px; color:#1ed760; }
+.spot-art.has-img ha-icon { display:none; }
+.spot-info { flex:1; min-width:0; }
+.spot-title { font-size:11.5px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.spot-artist { font-size:9.5px; color:rgba(233,235,238,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.spot-src { margin-top:3px; font-size:9px; font-weight:700; letter-spacing:.4px; color:#1ed760; background:rgba(30,215,96,0.12); border:1px solid rgba(30,215,96,0.3); border-radius:999px; padding:1px 7px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; }
+.spot-btns { display:flex; gap:4px; flex-shrink:0; }
+.spot-btns .icon-btn.main { width:28px; height:28px; background:#1ed760; border-color:#1ed760; }
+.spot-btns .icon-btn.main ha-icon { color:#062b12; --mdc-icon-size:14px; }
+
 /* ---------- AUDIO & TV ---------- */
 .col > .audio-panel { flex:1.3; }
 .spk-list { display:flex; flex-direction:column; gap:1px; flex:1; justify-content:space-evenly; min-height:0; }
@@ -259,18 +280,18 @@ button { all: unset; cursor: pointer; }
 
 /* ---------- AZIONI ---------- */
 .col > .actions-panel { flex:1.1; }
-.gate-status { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.4); text-align:center; margin-bottom:10px; flex-shrink:0; }
+.gate-status { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.4); text-align:center; margin-bottom:6px; flex-shrink:0; }
 .gate-status.busy { color:#ffd60a; }
-.action-btn-group { display:flex; flex-direction:column; gap:12px; flex:1; min-height:0; }
+.action-btn-group { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
 .action-btn {
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center;
-  padding:16px 12px; border-radius:14px; flex:1; min-height:78px;
+  display:grid; grid-template-columns:auto 1fr; column-gap:10px; row-gap:2px; align-content:center; align-items:center; text-align:left;
+  padding:8px 12px; border-radius:14px; flex:1; min-height:0;
   background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); transition:.2s ease;
 }
 .action-btn:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
-.action-btn ha-icon { --mdc-icon-size:24px; color:#e9ebee; flex-shrink:0; }
+.action-btn ha-icon { --mdc-icon-size:24px; color:#e9ebee; grid-row:1 / span 2; }
 .action-btn span { font-size:12.5px; font-weight:700; color:#f3f2ef; }
-.action-btn small { font-size:9.5px; font-weight:600; color:rgba(233,235,238,0.45); line-height:1.35; max-width:92%; }
+.action-btn small { font-size:9.5px; font-weight:600; color:rgba(233,235,238,0.45); line-height:1.3; }
 .action-btn.gate { border-color: rgba(255,69,58,0.3); }
 .action-btn.gate ha-icon { color:#ff6b60; }
 .action-btn.gate.busy { background: rgba(255,214,10,0.15); border-color: rgba(255,214,10,0.5); }
@@ -290,7 +311,7 @@ button { all: unset; cursor: pointer; }
 .sys-val.warn { color:#ffd60a; }
 .sys-val.danger { color:#ff453a; }
 
-/* ---------- modale conferma cancello ---------- */
+/* ---------- modale conferma cancello / modale generica ---------- */
 .modal-overlay {
   position:absolute; inset:0; background:rgba(3,4,6,0.72); backdrop-filter: blur(6px);
   display:flex; align-items:center; justify-content:center; z-index:50; opacity:0; pointer-events:none; transition: opacity .18s ease;
@@ -308,6 +329,21 @@ button { all: unset; cursor: pointer; }
 .modal-btns button:first-child { background:rgba(255,255,255,0.06); color:#e9ebee; border:1px solid rgba(255,255,255,0.12); }
 .modal-btns button.confirm { background:#ff453a; color:#fff; }
 .modal-btns button.confirm:hover { background:#ff6b60; }
+
+/* ---------- modale Spotify Connect ---------- */
+.spotify-modal-box { border-color: rgba(30,215,96,0.35); }
+.spotify-modal-box ha-icon.header-icon { color:#1ed760; }
+.spotify-device-list { display:flex; flex-direction:column; gap:8px; margin-top:16px; text-align:left; }
+.spotify-device-row {
+  display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:12px; width:100%;
+  background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); transition:.15s ease;
+}
+.spotify-device-row:hover { background: rgba(30,215,96,0.12); border-color: rgba(30,215,96,0.3); }
+.spotify-device-row ha-icon:first-child { --mdc-icon-size:18px; color: rgba(233,235,238,0.6); flex-shrink:0; }
+.spotify-device-row span { flex:1; font-size:12.5px; font-weight:600; color:#f3f2ef; }
+.spotify-device-row .check { --mdc-icon-size:16px; color:#1ed760; opacity:0; flex-shrink:0; }
+.spotify-device-row.active { border-color: rgba(30,215,96,0.4); background: rgba(30,215,96,0.08); }
+.spotify-device-row.active .check { opacity:1; }
 
 /* ---------- footer ---------- */
 .footer { display:flex; align-items:center; gap:8px; min-height:0; overflow:hidden; }
@@ -330,6 +366,8 @@ class CasaDashboardCard extends HTMLElement {
     this._lastTotalPower = 0;
     this._powerHistory = [];
     this._historyTicks = 0;
+    this._historySeeded = false;
+    this._resizeObserver = null;
     this._onResize = () => this._syncHeight();
   }
 
@@ -344,6 +382,10 @@ class CasaDashboardCard extends HTMLElement {
       this._clockTimer = setInterval(() => this._tick(), 1000);
       requestAnimationFrame(() => requestAnimationFrame(() => this._syncHeight()));
       window.addEventListener('resize', this._onResize);
+      if (window.ResizeObserver) {
+        this._resizeObserver = new ResizeObserver(() => this._syncHeight());
+        this._resizeObserver.observe(this);
+      }
     }
     this._update();
   }
@@ -352,12 +394,29 @@ class CasaDashboardCard extends HTMLElement {
   disconnectedCallback() {
     if (this._clockTimer) clearInterval(this._clockTimer);
     window.removeEventListener('resize', this._onResize);
+    if (this._resizeObserver) { this._resizeObserver.disconnect(); this._resizeObserver = null; }
   }
 
   _syncHeight() {
-    const top = this.getBoundingClientRect().top;
-    this.style.height = Math.max(300, window.innerHeight - top) + 'px';
+    const rect = this.getBoundingClientRect();
+    /* clientWidth riflette la larghezza reale già disposta dal layout (esclude la sidebar HA);
+       window.innerWidth va usato solo come ultimissima risorsa, mai come primo valore. */
+    const w = this.clientWidth || rect.width || window.innerWidth;
+    const h = Math.max(300, window.innerHeight - rect.top);
+    this.style.height = h + 'px';
     this.style.width = '100%';
+    const MIN_H = 620;
+    const dash = this.shadowRoot && this.shadowRoot.querySelector('.dash');
+    if (!dash) return;
+    const s = Math.min(1, h / MIN_H);
+    if (s < 1) {
+      dash.style.width = (w / s) + 'px';
+      dash.style.height = (h / s) + 'px';
+      dash.style.transform = `scale(${s})`;
+      dash.style.transformOrigin = 'top left';
+    } else {
+      dash.style.width = ''; dash.style.height = ''; dash.style.transform = ''; dash.style.transformOrigin = '';
+    }
   }
 
   _build() {
@@ -455,6 +514,19 @@ class CasaDashboardCard extends HTMLElement {
           <div class="col">
             <div class="panel audio-panel">
               <div class="panel-title"><ha-icon icon="mdi:speaker-multiple"></ha-icon>Audio &amp; Alexa</div>
+              <div class="spot" id="spot">
+                <div class="spot-art" id="spot-art"><ha-icon icon="mdi:spotify"></ha-icon></div>
+                <div class="spot-info">
+                  <div class="spot-title" id="spot-title">Spotify</div>
+                  <div class="spot-artist" id="spot-artist">In attesa</div>
+                  <button class="spot-src" data-action="spotify-source" id="spot-src" title="Cambia dispositivo">Scegli dispositivo</button>
+                </div>
+                <div class="spot-btns">
+                  <button class="icon-btn" data-action="spotify-prev"><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+                  <button class="icon-btn main" data-action="media-toggle:${SPOTIFY_ENTITY}" id="spot-play"><ha-icon icon="mdi:play"></ha-icon></button>
+                  <button class="icon-btn" data-action="spotify-next"><ha-icon icon="mdi:skip-next"></ha-icon></button>
+                </div>
+              </div>
               <div class="spk-list">
                 ${SPEAKERS.map(s => `
                 <div class="spk-row" id="spk-${s.entity.replace(/\./g, '_')}">
@@ -482,8 +554,9 @@ class CasaDashboardCard extends HTMLElement {
                     <div class="spk-sub" id="spksub-${t.entity.replace(/\./g, '_')}">${t.sub}</div>
                   </div>
                   ${t.controllable ? `
-                  <button class="icon-btn" data-action="toggle:${t.entity}"><ha-icon icon="mdi:power"></ha-icon></button>
-                  <button class="icon-btn" data-action="media-toggle:${t.entity}" id="spkbtn-${t.entity.replace(/\./g, '_')}"><ha-icon icon="mdi:play"></ha-icon></button>
+                  <button class="icon-btn" data-action="vol-down:${t.entity}"><ha-icon icon="mdi:volume-minus"></ha-icon></button>
+                  <button class="icon-btn" data-action="vol-up:${t.entity}"><ha-icon icon="mdi:volume-plus"></ha-icon></button>
+                  <button class="icon-btn" data-action="toggle:${t.entity}" id="spkbtn-${t.entity.replace(/\./g, '_')}"><ha-icon icon="mdi:power"></ha-icon></button>
                   ` : `
                   <button class="icon-btn" data-action="more-info:${t.entity}"><ha-icon icon="mdi:information-outline"></ha-icon></button>
                   `}
@@ -557,6 +630,25 @@ class CasaDashboardCard extends HTMLElement {
             </div>
           </div>
         </div>
+
+        <div class="modal-overlay" id="spotify-modal">
+          <div class="modal-box spotify-modal-box">
+            <ha-icon class="header-icon" icon="mdi:spotify"></ha-icon>
+            <div class="modal-title">Scegli dispositivo Spotify</div>
+            <div class="modal-sub">Seleziona l'altoparlante su cui riprodurre la musica.</div>
+            <div class="spotify-device-list" id="spotify-device-list">
+              ${SPOTIFY_DEVICES.map(d => `
+              <button class="spotify-device-row" data-action="spotify-select:${d.source}" data-source="${d.source}">
+                <ha-icon icon="${d.icon}"></ha-icon>
+                <span>${d.label}</span>
+                <ha-icon class="check" icon="mdi:check-circle"></ha-icon>
+              </button>`).join('')}
+            </div>
+            <div class="modal-btns">
+              <button data-action="spotify-cancel">Chiudi</button>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -593,6 +685,22 @@ class CasaDashboardCard extends HTMLElement {
         break;
       case 'media-toggle':
         this._hass.callService('media_player', 'media_play_pause', { entity_id: entity });
+        break;
+      case 'spotify-prev':
+        this._hass.callService('media_player', 'media_previous_track', { entity_id: SPOTIFY_ENTITY });
+        break;
+      case 'spotify-next':
+        this._hass.callService('media_player', 'media_next_track', { entity_id: SPOTIFY_ENTITY });
+        break;
+      case 'spotify-source':
+        this.shadowRoot.getElementById('spotify-modal').classList.add('show');
+        break;
+      case 'spotify-select':
+        this.shadowRoot.getElementById('spotify-modal').classList.remove('show');
+        this._hass.callService('media_player', 'select_source', { entity_id: SPOTIFY_ENTITY, source: entity });
+        break;
+      case 'spotify-cancel':
+        this.shadowRoot.getElementById('spotify-modal').classList.remove('show');
         break;
       case 'vol-up':
         this._hass.callService('media_player', 'volume_up', { entity_id: entity });
@@ -823,6 +931,12 @@ class CasaDashboardCard extends HTMLElement {
       gaugeFill.style.stroke = pct > 0.85 ? '#ff453a' : '#c9a869';
     }
     this._lastTotalPower = total;
+    /* Pre-inizializza lo storico con il primo valore reale, cosi' lo sparkline non parte vuoto */
+    if (!this._historySeeded) {
+      this._historySeeded = true;
+      this._powerHistory = new Array(60).fill(total);
+      this._renderSparkline();
+    }
 
     /* ---- sistema ---- */
     const sysUpdatesEl = sh.getElementById('sys-updates');
@@ -850,6 +964,29 @@ class CasaDashboardCard extends HTMLElement {
       if (backupValEl) {
         backupValEl.textContent = configured ? relTime(backupSt.state) : '--';
         backupValEl.className = `sys-val mono ${configured ? 'ok' : 'warn'}`;
+      }
+    }
+
+    /* ---- Spotify ---- */
+    {
+      const sp = states[SPOTIFY_ENTITY];
+      const box = sh.getElementById('spot');
+      if (box) box.style.display = sp ? '' : 'none';
+      if (sp) {
+        const a = sp.attributes;
+        const playing = sp.state === 'playing';
+        const hasTrack = playing || sp.state === 'paused';
+        const t = sh.getElementById('spot-title'); if (t) t.textContent = hasTrack && a.media_title ? a.media_title : 'Spotify';
+        const ar = sh.getElementById('spot-artist'); if (ar) ar.textContent = hasTrack ? (a.media_artist || '') : (sp.state === 'unavailable' ? 'Non disponibile' : 'In attesa');
+        const src = sh.getElementById('spot-src'); if (src) src.textContent = a.source || 'Scegli dispositivo';
+        const art = sh.getElementById('spot-art');
+        if (art) {
+          const pic = hasTrack ? a.entity_picture : null;
+          if (pic !== this._spotPic) { this._spotPic = pic; art.style.backgroundImage = pic ? `url("${pic}")` : ''; art.classList.toggle('has-img', !!pic); }
+        }
+        const pb = sh.querySelector('#spot-play ha-icon'); if (pb) pb.setAttribute('icon', playing ? 'mdi:pause' : 'mdi:play');
+        const deviceRows = sh.querySelectorAll('.spotify-device-row');
+        deviceRows.forEach(r => r.classList.toggle('active', r.dataset.source === a.source));
       }
     }
 
@@ -884,21 +1021,23 @@ class CasaDashboardCard extends HTMLElement {
       const btn = sh.getElementById(`spkbtn-${key}`);
       if (!st) return;
       const unavail = st.state === 'unavailable';
-      if (row) row.classList.toggle('unavail', unavail);
+      if (row) row.classList.toggle('unavail', unavail && !t.controllable);
       if (sub && t.controllable) {
         let label = t.sub;
-        if (st.state === 'playing') label = st.attributes.media_title || 'In riproduzione';
+        if (st.state === 'on') {
+          const vol = typeof st.attributes.volume_level === 'number' ? ` · vol ${Math.round(st.attributes.volume_level * 100)}` : '';
+          label = `Accesa${st.attributes.source ? ' · ' + st.attributes.source : ''}${vol}`;
+        } else if (st.state === 'off' || unavail) label = 'Spenta';
+        else if (st.state === 'playing') label = st.attributes.media_title || 'In riproduzione';
         else if (st.state === 'paused') label = 'In pausa';
         else if (st.state === 'idle') label = 'In attesa';
         else if (unavail) label = 'Non disponibile';
         sub.textContent = label;
       } else if (sub) {
-        sub.textContent = unavail ? 'Non disponibile' : t.sub;
+        /* TV DLNA (es. Pluriuso 55"): 'unavailable' significa solo 'spenta', non un errore */
+        sub.textContent = unavail ? 'Spenta' : t.sub;
       }
-      if (btn) {
-        const ic = btn.querySelector('ha-icon');
-        if (ic) ic.setAttribute('icon', st.state === 'playing' ? 'mdi:pause' : 'mdi:play');
-      }
+      if (btn) btn.style.background = st.state === 'on' ? 'rgba(52,199,89,0.35)' : '';
     });
   }
 }
