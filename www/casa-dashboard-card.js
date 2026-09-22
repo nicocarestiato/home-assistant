@@ -21,6 +21,7 @@ const WEATHER_ICONS = {
 const C = {
   soggiorno: '#5ac8fa', cucina: '#34c759', camera: '#af52de', giardino: '#32ade6',
   pluriuso: '#5e5ce6', lavanderia: '#ff9f0a', gold: '#c9a869', danger: '#ff453a',
+  bagno: '#30d0c0',
 };
 
 /* Luci con spegnimento automatico: entity, sensore potenza, timeout (s), preavviso (s prima dello spegnimento) */
@@ -29,6 +30,7 @@ const LIGHTS = [
   { id: 'cucina1', name: 'Cucina 1 (lunghi)', room: 'Cucina', icon: 'mdi:ceiling-light-multiple', entity: 'switch.shelly2pmg3_d0cf13dab110_output_1', power: 'sensor.shelly2pmg3_d0cf13dab110_output_1_potenza', timeout: 600, warn: 20, color: C.cucina },
   { id: 'cucina2', name: 'Cucina 2 (corti)', room: 'Cucina', icon: 'mdi:ceiling-light-multiple-outline', entity: 'switch.shelly2pmg3_d0cf13dab110_output_0', power: 'sensor.shelly2pmg3_d0cf13dab110_output_0_potenza', timeout: 600, warn: 20, color: C.cucina },
   { id: 'lavanderia', name: 'Lavanderia', room: 'Lavanderia', icon: 'mdi:ceiling-light', entity: 'switch.shelly1pmg3_dcda0cdf6e60', power: 'sensor.shelly1pmg3_dcda0cdf6e60_potenza', timeout: 300, warn: 20, color: C.lavanderia },
+  { id: 'bagno', name: 'Bagno piano terra', room: 'Bagno', icon: 'mdi:shower-head', entity: 'switch.shelly1pmg3_48f6eeaf2e2c', power: 'sensor.shelly1pmg3_48f6eeaf2e2c_potenza', timeout: 600, warn: 20, color: C.bagno },
   { id: 'faro', name: 'Faro giardino', room: 'Giardino', icon: 'mdi:spotlight-beam', entity: 'switch.shelly1g3_48f6ee8a5b4c_faro', power: null, timeout: null, warn: null, color: C.giardino },
 ];
 
@@ -43,6 +45,7 @@ const POWER_SENSORS = [
   { name: 'Cucina 1', entity: 'sensor.shelly2pmg3_d0cf13dab110_output_1_potenza', energia: 'sensor.shelly2pmg3_d0cf13dab110_output_1_energia', color: C.cucina },
   { name: 'Cucina 2', entity: 'sensor.shelly2pmg3_d0cf13dab110_output_0_potenza', energia: 'sensor.shelly2pmg3_d0cf13dab110_output_0_energia', color: C.cucina },
   { name: 'Lavanderia', entity: 'sensor.shelly1pmg3_dcda0cdf6e60_potenza', energia: 'sensor.shelly1pmg3_dcda0cdf6e60_energia', color: C.lavanderia },
+  { name: 'Bagno', entity: 'sensor.shelly1pmg3_48f6eeaf2e2c_potenza', energia: 'sensor.shelly1pmg3_48f6eeaf2e2c_energia', color: C.bagno },
   { name: 'Tenda Sogg.', entity: 'sensor.tenda_soggiorno_tenda_soggiorno_potenza', energia: 'sensor.tenda_soggiorno_tenda_soggiorno_energia', color: C.soggiorno },
   { name: 'Tenda Pluriuso', entity: 'sensor.shellyplus2pm_a0dd6c4e2fd8_tenda_pluriuso_potenza', energia: 'sensor.shellyplus2pm_a0dd6c4e2fd8_tenda_pluriuso_energia', color: C.pluriuso },
 ];
@@ -74,6 +77,80 @@ const UPDATE_ENTITIES = [
   'update.home_assistant_operating_system_update', 'update.home_assistant_supervisor_update',
   'update.hacs_update', 'update.matter_server_update',
 ];
+
+/* ---- MAFALDA (Dreame Aqua10 Ultra Roller Complete) ---- */
+const VAC = 'vacuum.mafalda_aqua10_ultra_roller_complete';
+const VAC_P = 'sensor.mafalda_aqua10_ultra_roller_complete_';
+const VAC_STATUS = VAC_P + 'status';
+const VAC_BATTERY = VAC_P + 'battery_level';
+const VAC_WASH = VAC_P + 'self_wash_base_status';
+const VAC_EMPTY = VAC_P + 'auto_empty_status';
+const VAC_ERROR = VAC_P + 'error';
+const VAC_AREA = VAC_P + 'cleaned_area';
+const VAC_TIME = VAC_P + 'cleaning_time';
+const VAC_MAP = 'camera.mafalda_aqua10_ultra_roller_complete_map';
+const CAM_HDD     = 'sensor.nvr_hdd1';
+const CAM_ALARM   = 'switch.nvr_uscita_allarme';
+const CAM_HOLIDAY = 'switch.nvr_modalita_vacanza';
+const CAM_SKIP    = /mafalda|_map|_sd_stream|_direct/;
+const CAM_KINDS   = [
+  ['movimento', 'Movimento'],
+  ['intrusione', 'Intrusione'],
+  ['attraversamento_linea', 'Linea'],
+  ['manomissione', 'Manomissione'],
+  ['perdita_video', 'Video perso']
+];
+function camIds(st) {
+  return Object.keys(st).filter(k => k.indexOf('camera.') === 0 && !CAM_SKIP.test(k)).sort();
+}
+function camSlug(id) { return id.split('.')[1]; }
+function camName(st, id) {
+  const s = st[id];
+  return (s && s.attributes && s.attributes.friendly_name) || camSlug(id).replace(/_/g, ' ');
+}
+function camAlerts(st, id) {
+  const p = 'binary_sensor.' + camSlug(id) + '_';
+  return CAM_KINDS.filter(k => { const e = st[p + k[0]]; return e && e.state === 'on'; }).map(k => k[1]);
+}
+function camSummary(st) {
+  const ids = camIds(st);
+  let first = null, tot = 0;
+  ids.forEach(id => {
+    const a = camAlerts(st, id);
+    if (a.length) { tot += a.length; if (!first) first = a[0] + ' - ' + camName(st, id); }
+  });
+  const hdd = st[CAM_HDD] && st[CAM_HDD].state;
+  if (tot) return { t: first, v: tot > 1 ? tot + ' EV' : 'EV', c: 'warn', n: tot };
+  if (hdd && hdd !== 'OK') return { t: 'Disco NVR in errore: ' + hdd, v: 'HDD', c: 'bad', n: 0 };
+  return { t: ids.length + (ids.length === 1 ? ' telecamera' : ' telecamere') + ' - nessun evento', v: 'OK', c: 'ok', n: 0 };
+}
+
+/* Stato sintetico in italiano: { testo, icona, classe } */
+function vacSummary(states) {
+  const g = id => states[id] && states[id].state;
+  const err = g(VAC_ERROR);
+  const st = g(VAC_STATUS) || '';
+  const wash = g(VAC_WASH) || '';
+  const empty = g(VAC_EMPTY) || '';
+  const vac = states[VAC];
+  const vs = vac ? vac.state : 'unavailable';
+  const bat = g(VAC_BATTERY);
+  if (vs === 'unavailable' || !vac) return { t: 'Non raggiungibile', i: 'mdi:robot-vacuum-off', c: 'warn' };
+  if (err && err !== 'no_error') return { t: 'Errore: ' + err.replace(/_/g, ' '), i: 'mdi:alert-circle-outline', c: 'danger' };
+  if (/washing/.test(wash)) return { t: 'Lavaggio panni in corso', i: 'mdi:water-sync', c: 'run' };
+  if (/drying/.test(wash)) return { t: 'Asciugatura panni in corso', i: 'mdi:hair-dryer', c: 'run' };
+  if (/(emptying|collecting|active|running)/.test(empty)) return { t: 'Svuotamento polvere', i: 'mdi:delete-empty', c: 'run' };
+  if (vs === 'cleaning') {
+    const map = { room_cleaning: 'Pulizia stanze', zone_cleaning: 'Pulizia zona', spot_cleaning: 'Pulizia spot', cruising: 'Perlustrazione' };
+    return { t: (map[st] || 'Pulizia in corso'), i: 'mdi:robot-vacuum', c: 'run' };
+  }
+  if (vs === 'returning') return { t: 'Rientro alla base', i: 'mdi:home-import-outline', c: 'run' };
+  if (vs === 'paused') return { t: 'In pausa', i: 'mdi:pause-circle-outline', c: 'warn' };
+  if (/charging/.test(st) || (vs === 'docked' && bat && Number(bat) < 100)) return { t: 'In carica' + (bat ? ' · ' + bat + '%' : ''), i: 'mdi:battery-charging', c: 'run' };
+  if (vs === 'docked') return { t: 'Alla base, pronta', i: 'mdi:robot-vacuum', c: 'ok' };
+  if (vs === 'idle') return { t: 'In attesa', i: 'mdi:robot-vacuum', c: '' };
+  return { t: st ? st.replace(/_/g, ' ') : vs, i: 'mdi:robot-vacuum', c: '' };
+}
 
 const PRINTER_STATE = 'sensor.hp_laserjet_mfp_m28_m31';
 const PRINTER_TONER = 'sensor.hp_laserjet_mfp_m28_m31_black_cartridge_hp_cf244a';
@@ -253,8 +330,8 @@ button { all: unset; cursor: pointer; }
 
 /* ---------- AUDIO & TV ---------- */
 .col > .audio-panel { flex:1.3; }
-.spk-list { display:flex; flex-direction:column; gap:4px; flex:1; min-height:0; }
-.spk-row { display:flex; align-items:center; gap:10px; padding:7px 6px; border-radius:10px; flex:1; }
+.spk-list { display:flex; flex-direction:column; gap:4px; flex:3 1 0; min-height:0; overflow:hidden; }
+.spk-row { display:flex; align-items:center; gap:10px; padding:4px 6px; border-radius:10px; flex:1 1 0; min-height:0; }
 .spk-row.unavail { opacity:.4; pointer-events:none; }
 .spk-row > ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.6); flex-shrink:0; }
 .spk-info { flex:1; min-width:0; }
@@ -276,10 +353,10 @@ button { all: unset; cursor: pointer; }
 .announce-btn:hover { background:rgba(201,168,105,0.35); }
 
 .sep { height:1px; background:rgba(255,255,255,0.11); margin:4px 0 6px; flex-shrink:0; }
-.tv-list { display:flex; flex-direction:column; gap:4px; flex:1; min-height:0; }
+.tv-list { display:flex; flex-direction:column; gap:4px; flex:2 1 0; min-height:0; overflow:hidden; }
 
 /* ---------- AZIONI ---------- */
-.col > .actions-panel { flex:1.1; }
+.col > .actions-panel { flex:0.95; }
 .gate-status { font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:700; color:rgba(233,235,238,0.52); text-align:center; margin-bottom:6px; flex-shrink:0; }
 .gate-status.busy { color:#ffd60a; }
 .action-btn-group { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
@@ -299,9 +376,9 @@ button { all: unset; cursor: pointer; }
 .action-btn.offall ha-icon { color:#c9a869; }
 
 /* ---------- SISTEMA ---------- */
-.col > .system-panel { flex:0.9; }
-.sys-list { display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
-.sys-row { display:flex; align-items:center; gap:10px; flex:1; padding:6px 8px; border-radius:10px; background:rgba(255,255,255,0.03); }
+.col > .system-panel { flex:1.15; }
+.sys-list { display:flex; flex-direction:column; gap:5px; flex:1; min-height:0; overflow:hidden; }
+.sys-row { display:flex; align-items:center; gap:9px; flex:1 1 0; min-height:0; padding:4px 8px; border-radius:10px; background:rgba(255,255,255,0.03); }
 .sys-row ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.6); flex-shrink:0; }
 .sys-info { flex:1; min-width:0; }
 .sys-label { font-size:12.5px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -310,6 +387,95 @@ button { all: unset; cursor: pointer; }
 .sys-val.ok { color:#34c759; }
 .sys-val.warn { color:#ffd60a; }
 .sys-val.danger { color:#ff453a; }
+.sys-row.clickable { cursor:pointer; transition:.15s ease; }
+.sys-row.clickable:hover { background:rgba(201,168,105,0.12); border:1px solid rgba(201,168,105,0.28); padding:5px 7px; }
+
+/* ---------- intestazione condivisa dei modali "grandi" (MAFALDA / Videosorveglianza) ---------- */
+.mc-head { display:flex; align-items:center; gap:12px; }
+.mc-head-icon { --mdc-icon-size:26px; flex:0 0 auto; }
+.mc-head-icon.vac { color:#5ac8fa; filter: drop-shadow(0 0 10px rgba(90,200,250,0.45)); }
+.mc-head-icon.cam { color:#ff9f0a; filter: drop-shadow(0 0 10px rgba(255,159,10,0.45)); }
+.mc-head-txt { flex:1; min-width:0; }
+.mc-head-title { font-size:15px; font-weight:800; letter-spacing:2.4px; text-transform:uppercase; color:#f3f2ef; }
+.mc-head-sub { font-size:11px; color:rgba(233,235,238,0.55); margin-top:2px; }
+.mc-live-tag { display:flex; align-items:center; gap:6px; font-size:9.5px; font-weight:800; letter-spacing:1.4px;
+  color:#ff5f56; background:rgba(255,95,86,0.12); border:1px solid rgba(255,95,86,0.35); padding:4px 10px; border-radius:999px; flex:0 0 auto; }
+.mc-live-tag i { width:6px; height:6px; border-radius:50%; background:#ff5f56; animation: mcpulse 1.6s infinite; }
+@keyframes mcpulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.35; transform:scale(.8); } }
+
+/* ---------- modale Videosorveglianza ---------- */
+.modal-box.cam-modal-box { border-color: rgba(255,159,10,0.32); width:min(980px, 96%) !important; max-width:none !important; max-height:93vh; overflow-y:auto; text-align:left; }
+.cam-wall { display:grid; gap:10px; margin-top:14px;
+  grid-template-columns: repeat(2, minmax(0,1fr)); max-height:60vh; overflow-y:auto; padding-right:2px; }
+.cam-wall.many { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.cam-cell { position:relative; border-radius:14px; overflow:hidden; background:#0b0d10;
+  border:1px solid rgba(255,255,255,0.12); aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; }
+.cam-cell.alert { border-color:#ff9f0a; box-shadow:0 0 0 1px rgba(255,159,10,0.5), 0 0 18px rgba(255,159,10,0.25); }
+.cam-cell.empty { font-size:11px; color:rgba(233,235,238,0.4); }
+.cam-cell hui-picture-entity-card, .cam-cell ha-card { width:100%; height:100%; border:none !important;
+  box-shadow:none !important; background:transparent !important; border-radius:0 !important; margin:0 !important; }
+.cam-cell img, .cam-cell video { width:100% !important; height:100% !important; object-fit:cover !important; display:block; }
+.cam-cell .zone { position:absolute; left:8px; bottom:7px; font-size:9.5px; font-weight:700; letter-spacing:.7px;
+  text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 9px; border-radius:999px;
+  backdrop-filter: blur(6px); pointer-events:none; z-index:2; }
+.cam-cell .ev { display:none; position:absolute; right:8px; top:7px; font-size:9px; font-weight:800; letter-spacing:.6px;
+  text-transform:uppercase; color:#0b0d10; background:#ff9f0a; padding:3px 9px; border-radius:999px; pointer-events:none; z-index:2; }
+.cam-none { grid-column:1/-1; padding:26px; text-align:center; font-size:12px; color:rgba(233,235,238,0.45); }
+.cam-foot { display:flex; align-items:stretch; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.cam-nvr { flex:1 1 150px; display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:12px;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); }
+.cam-nvr ha-icon { --mdc-icon-size:16px; color:rgba(233,235,238,0.55); }
+.cam-nvr .n { flex:1; font-size:10.5px; color:rgba(233,235,238,0.55); }
+.cam-nvr .v { font-size:10.5px; font-weight:800; color:#5ad07a; }
+.cam-nvr.bad .v { color:#ff5f56; }
+.cam-btn { flex:1 1 110px; display:flex; align-items:center; justify-content:center; gap:7px; padding:10px 8px; border-radius:12px;
+  background:rgba(255,159,10,0.1); border:1px solid rgba(255,159,10,0.28); color:#f3f2ef;
+  font-family:inherit; font-size:11.5px; font-weight:700; letter-spacing:.4px; cursor:pointer; transition:.18s; }
+.cam-btn:hover { background:rgba(255,159,10,0.2); border-color:rgba(255,159,10,0.5); }
+.cam-btn ha-icon { --mdc-icon-size:16px; color:#ff9f0a; }
+.cam-btn.active { background:rgba(255,159,10,0.28); border-color:#ff9f0a; }
+.cam-btn.ghost { background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.12); }
+.cam-btn.ghost ha-icon { color:rgba(233,235,238,0.6); }
+
+/* ---------- modale MAFALDA: due colonne, mappa grande (comandi/consumabili a sinistra) ---------- */
+.modal-box.vac-modal-box { border-color: rgba(90,200,250,0.35); width:min(900px, 96%); max-width:none; max-height:93vh; overflow-y:auto; text-align:left; }
+.vac-body { display:grid; grid-template-columns: 260px 1fr; gap:18px; margin-top:16px; min-height:0; }
+.vac-col-left { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.vac-col-right { min-width:0; min-height:0; display:flex; flex-direction:column; }
+.vac-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.vac-stat { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:10px 6px; text-align:center; }
+.vac-stat .v { font-size:16px; font-weight:800; color:#f3f2ef; }
+.vac-stat .l { font-size:9.5px; text-transform:uppercase; letter-spacing:.6px; color:rgba(233,235,238,0.5); margin-top:2px; }
+.vac-actions { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.vac-btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 8px; border-radius:12px;
+  background:rgba(255,255,255,0.075); border:1px solid rgba(255,255,255,0.14); font-size:13px; font-weight:700; color:#f3f2ef; transition:.15s ease; }
+.vac-btn:hover { background:rgba(90,200,250,0.16); border-color:rgba(90,200,250,0.4); }
+.vac-btn ha-icon { --mdc-icon-size:17px; color:#5ac8fa; }
+.vac-consum { display:flex; flex-direction:column; gap:6px; text-align:left; }
+.vac-consum-title { font-size:9.5px; text-transform:uppercase; letter-spacing:1px; font-weight:700; color:rgba(233,235,238,0.45); margin-bottom:2px; }
+.vac-consum-row { display:flex; align-items:center; gap:8px; font-size:11.5px; color:rgba(233,235,238,0.65); }
+.vac-consum-row .n { flex:1; }
+.vac-consum-row .b { width:64px; height:5px; border-radius:3px; background:rgba(255,255,255,0.1); overflow:hidden; flex-shrink:0; }
+.vac-consum-row .b i { display:block; height:100%; background:#5ac8fa; }
+.vac-consum-row .p { width:34px; text-align:right; font-weight:700; color:#f3f2ef; flex-shrink:0; }
+.vac-map { flex:1; min-height:300px; border-radius:14px; overflow:hidden; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); position:relative; display:flex; }
+.vac-map img { display:block; width:100%; height:100%; object-fit:contain; background:#0b0d10; margin:auto; }
+.vac-map .ts { position:absolute; right:10px; bottom:8px; font-size:10px; color:rgba(233,235,238,0.65); background:rgba(0,0,0,0.45); padding:3px 9px; border-radius:999px; }
+.vac-map.empty { padding:18px; font-size:12px; color:rgba(233,235,238,0.55); align-items:center; justify-content:center; text-align:center; }
+
+/* ---------- modale aggiornamenti ---------- */
+.modal-box.updates-modal-box { border-color: rgba(201,168,105,0.35); width:min(420px, 90%); }
+.updates-modal-box ha-icon.header-icon { color:#c9a869; }
+.updates-list { display:flex; flex-direction:column; gap:8px; margin-top:16px; text-align:left; max-height:44vh; overflow:auto; }
+.update-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; width:100%;
+  background:rgba(255,255,255,0.075); border:1px solid rgba(255,255,255,0.13); transition:.15s ease; }
+.update-row:hover { background:rgba(201,168,105,0.14); border-color:rgba(201,168,105,0.35); }
+.update-row ha-icon { --mdc-icon-size:18px; color:rgba(233,235,238,0.68); flex-shrink:0; }
+.update-info { flex:1; min-width:0; }
+.update-name { font-size:13.5px; font-weight:700; color:#f3f2ef; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.update-ver { font-size:11px; color:rgba(233,235,238,0.55); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.update-ver b { color:#c9a869; font-weight:700; }
+.updates-empty { font-size:13px; color:rgba(233,235,238,0.6); margin-top:16px; }
 
 /* ---------- modale conferma cancello / modale generica ---------- */
 .modal-overlay {
@@ -331,7 +497,7 @@ button { all: unset; cursor: pointer; }
 .modal-btns button.confirm:hover { background:#ff6b60; }
 
 /* ---------- modale Spotify Connect ---------- */
-.spotify-modal-box { border-color: rgba(30,215,96,0.35); }
+.modal-box.spotify-modal-box { border-color: rgba(30,215,96,0.35); }
 .spotify-modal-box ha-icon.header-icon { color:#1ed760; }
 .spotify-device-list { display:flex; flex-direction:column; gap:8px; margin-top:16px; text-align:left; }
 .spotify-device-row {
@@ -585,7 +751,23 @@ class CasaDashboardCard extends HTMLElement {
             <div class="panel system-panel">
               <div class="panel-title"><ha-icon icon="mdi:server"></ha-icon>Sistema</div>
               <div class="sys-list">
-                <div class="sys-row">
+                <div class="sys-row clickable" data-action="vac-open" id="sys-vac-row" title="Apri i comandi di MAFALDA">
+                  <ha-icon id="sys-vac-icon" icon="mdi:robot-vacuum"></ha-icon>
+                  <div class="sys-info">
+                    <div class="sys-label">MAFALDA</div>
+                    <div class="sys-sub" id="sys-vac-sub">--</div>
+                  </div>
+                  <div class="sys-val mono" id="sys-vac-val">--</div>
+                </div>
+                <div class="sys-row clickable" data-action="cam-open" id="sys-cam-row" title="Apri la videosorveglianza">
+                  <ha-icon id="sys-cam-icon" icon="mdi:cctv"></ha-icon>
+                  <div class="sys-info">
+                    <div class="sys-label">Videosorveglianza</div>
+                    <div class="sys-sub" id="sys-cam-sub">--</div>
+                  </div>
+                  <div class="sys-val mono" id="sys-cam-val">--</div>
+                </div>
+                <div class="sys-row clickable" data-action="updates-open" title="Vedi quali aggiornamenti sono disponibili">
                   <ha-icon icon="mdi:cloud-download-outline"></ha-icon>
                   <div class="sys-info">
                     <div class="sys-label">Aggiornamenti</div>
@@ -601,7 +783,7 @@ class CasaDashboardCard extends HTMLElement {
                   </div>
                   <div class="sys-val mono" id="sys-toner">--</div>
                 </div>
-                <div class="sys-row">
+                <div class="sys-row clickable" data-action="backup-open" title="Apri le impostazioni di backup">
                   <ha-icon icon="mdi:backup-restore"></ha-icon>
                   <div class="sys-info">
                     <div class="sys-label">Backup</div>
@@ -627,6 +809,74 @@ class CasaDashboardCard extends HTMLElement {
             <div class="modal-btns">
               <button data-action="gate-cancel">Annulla</button>
               <button class="confirm" data-action="gate-confirm">Conferma apertura</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-overlay" id="vac-modal">
+          <div class="modal-box vac-modal-box">
+            <div class="mc-head">
+              <ha-icon class="mc-head-icon vac" icon="mdi:robot-vacuum"></ha-icon>
+              <div class="mc-head-txt">
+                <div class="mc-head-title">MAFALDA</div>
+                <div class="mc-head-sub" id="vac-modal-status">--</div>
+              </div>
+            </div>
+            <div class="vac-body">
+              <div class="vac-col-left">
+                <div class="vac-stats">
+                  <div class="vac-stat"><div class="v mono" id="vac-bat">--</div><div class="l">Batteria</div></div>
+                  <div class="vac-stat"><div class="v mono" id="vac-area">--</div><div class="l">Area pulita</div></div>
+                  <div class="vac-stat"><div class="v mono" id="vac-time">--</div><div class="l">Durata</div></div>
+                </div>
+                <div class="vac-actions">
+                  <button class="vac-btn" data-action="vac-start"><ha-icon icon="mdi:play"></ha-icon>Avvia</button>
+                  <button class="vac-btn" data-action="vac-pause"><ha-icon icon="mdi:pause"></ha-icon>Pausa</button>
+                  <button class="vac-btn" data-action="vac-home"><ha-icon icon="mdi:home-import-outline"></ha-icon>Alla base</button>
+                  <button class="vac-btn" data-action="vac-locate"><ha-icon icon="mdi:map-marker-radius"></ha-icon>Localizza</button>
+                </div>
+                <div class="vac-consum">
+                  <div class="vac-consum-title">Consumabili</div>
+                  <div id="vac-consum-rows"></div>
+                </div>
+              </div>
+              <div class="vac-col-right">
+                <div class="vac-map" id="vac-map"></div>
+              </div>
+            </div>
+            <div class="modal-btns">
+              <button data-action="vac-close">Chiudi</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-overlay" id="cam-modal">
+          <div class="modal-box cam-modal-box">
+            <div class="mc-head">
+              <ha-icon class="mc-head-icon cam" icon="mdi:cctv"></ha-icon>
+              <div class="mc-head-txt">
+                <div class="mc-head-title">Videosorveglianza</div>
+                <div class="mc-head-sub" id="cam-modal-status">--</div>
+              </div>
+              <div class="mc-live-tag"><i></i>LIVE</div>
+            </div>
+            <div class="cam-wall" id="cam-wall"></div>
+            <div class="cam-foot">
+              <div class="cam-nvr" id="cam-nvr"><ha-icon icon="mdi:harddisk"></ha-icon><span class="n">Disco NVR</span><span class="v">--</span></div>
+              <button class="cam-btn" data-action="cam-alarm" id="cam-btn-alarm"><ha-icon icon="mdi:bullhorn-outline"></ha-icon>Allarme</button>
+              <button class="cam-btn" data-action="cam-holiday" id="cam-btn-holiday"><ha-icon icon="mdi:palm-tree"></ha-icon>Vacanza</button>
+              <button class="cam-btn ghost" data-action="cam-close"><ha-icon icon="mdi:close"></ha-icon>Chiudi</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-overlay" id="updates-modal">
+          <div class="modal-box updates-modal-box">
+            <ha-icon class="header-icon" icon="mdi:cloud-download-outline"></ha-icon>
+            <div class="modal-title">Aggiornamenti disponibili</div>
+            <div class="modal-sub">Tocca una voce per aprirla e installarla.</div>
+            <div class="updates-list" id="updates-list"></div>
+            <div class="modal-btns">
+              <button data-action="updates-close">Chiudi</button>
             </div>
           </div>
         </div>
@@ -692,6 +942,83 @@ class CasaDashboardCard extends HTMLElement {
       case 'spotify-next':
         this._hass.callService('media_player', 'media_next_track', { entity_id: SPOTIFY_ENTITY });
         break;
+      case 'cam-open': {
+        this.shadowRoot.getElementById('cam-modal').classList.add('show');
+        this._renderCam(true);
+        break;
+      }
+      case 'cam-close':
+        this.shadowRoot.getElementById('cam-modal').classList.remove('show');
+        break;
+      case 'cam-alarm':
+        this._hass.callService('homeassistant', 'toggle', { entity_id: CAM_ALARM });
+        break;
+      case 'cam-holiday':
+        this._hass.callService('homeassistant', 'toggle', { entity_id: CAM_HOLIDAY });
+        break;
+      case 'vac-open': {
+        const st = this._hass.states;
+        const box = this.shadowRoot;
+        const sum = vacSummary(st);
+        box.getElementById('vac-modal-status').textContent = sum.t;
+        const bat = st[VAC_BATTERY] && st[VAC_BATTERY].state;
+        box.getElementById('vac-bat').textContent = bat ? bat + '%' : '--';
+        const area = st[VAC_AREA] && st[VAC_AREA].state;
+        box.getElementById('vac-area').textContent = area ? area + ' m²' : '--';
+        const t = st[VAC_TIME] && st[VAC_TIME].state;
+        box.getElementById('vac-time').textContent = t ? t + ' min' : '--';
+        this._renderVacConsum();
+        this._renderVacMap(true);
+        box.getElementById('vac-modal').classList.add('show');
+        break;
+      }
+      case 'vac-close':
+        this.shadowRoot.getElementById('vac-modal').classList.remove('show');
+        break;
+      case 'vac-start':
+        this._hass.callService('vacuum', 'start', { entity_id: VAC });
+        break;
+      case 'vac-pause':
+        this._hass.callService('vacuum', 'pause', { entity_id: VAC });
+        break;
+      case 'vac-home':
+        this._hass.callService('vacuum', 'return_to_base', { entity_id: VAC });
+        break;
+      case 'vac-locate':
+        this._hass.callService('vacuum', 'locate', { entity_id: VAC });
+        break;
+      case 'updates-open': {
+        const list = this.shadowRoot.getElementById('updates-list');
+        const st = this._hass.states;
+        const pending = Object.keys(st).filter(k => k.startsWith('update.') && st[k].state === 'on');
+        if (!pending.length) {
+          list.innerHTML = '<div class="updates-empty">Nessun aggiornamento in sospeso: e\' tutto aggiornato.</div>';
+        } else {
+          list.innerHTML = pending.map(id => {
+            const a = st[id].attributes;
+            const name = a.friendly_name || a.title || id;
+            const from = a.installed_version || '?';
+            const to = a.latest_version || '?';
+            return `<button class="update-row" data-action="more-info:${id}">
+              <ha-icon icon="${a.device_class === 'firmware' ? 'mdi:chip' : 'mdi:package-down'}"></ha-icon>
+              <div class="update-info">
+                <div class="update-name">${name}</div>
+                <div class="update-ver">${from} &rarr; <b>${to}</b></div>
+              </div>
+              <ha-icon icon="mdi:chevron-right"></ha-icon>
+            </button>`;
+          }).join('');
+        }
+        this.shadowRoot.getElementById('updates-modal').classList.add('show');
+        break;
+      }
+      case 'updates-close':
+        this.shadowRoot.getElementById('updates-modal').classList.remove('show');
+        break;
+      case 'backup-open':
+        window.history.pushState(null, '', '/config/backup');
+        window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: false } }));
+        break;
       case 'spotify-source':
         this.shadowRoot.getElementById('spotify-modal').classList.add('show');
         break;
@@ -729,9 +1056,141 @@ class CasaDashboardCard extends HTMLElement {
       case 'all-off':
         this._hass.callService('homeassistant', 'turn_off', { entity_id: ALL_OFF_TARGETS });
         break;
-      case 'more-info':
+      case 'more-info': {
+        const um = this.shadowRoot.getElementById('updates-modal');
+        if (um) um.classList.remove('show');
         this._fireMoreInfo(entity);
+      }
         break;
+    }
+  }
+
+  /* Mappa in tempo reale: l'immagine della camera viene ricaricata a ogni aggiornamento
+     dell'attributo entity_picture (il robot la rigenera mentre pulisce). */
+  async _buildCamWall(ids) {
+    const sr = this.shadowRoot;
+    const wall = sr && sr.getElementById('cam-wall');
+    if (!wall) return;
+    this._camCards = [];
+    wall.innerHTML = '';
+    wall.classList.toggle('many', ids.length > 4);
+    if (!ids.length) {
+      wall.innerHTML = '<div class="cam-none">Nessuna telecamera disponibile</div>';
+      return;
+    }
+    let helpers = null;
+    try { helpers = await window.loadCardHelpers(); } catch (e) { helpers = null; }
+    for (const id of ids) {
+      const cell = document.createElement('div');
+      cell.className = 'cam-cell';
+      if (helpers) {
+        try {
+          const card = await helpers.createCardElement({
+            type: 'picture-entity', entity: id, camera_view: 'live',
+            show_name: false, show_state: false, fit_mode: 'cover'
+          });
+          card.hass = this._hass;
+          this._camCards.push(card);
+          cell.appendChild(card);
+        } catch (e) {
+          cell.classList.add('empty');
+          cell.textContent = 'Flusso non disponibile';
+        }
+      } else {
+        cell.classList.add('empty');
+        cell.textContent = 'Flusso non disponibile';
+      }
+      const tag = document.createElement('span');
+      tag.className = 'zone';
+      tag.textContent = camName(this._hass.states, id);
+      cell.appendChild(tag);
+      const badge = document.createElement('span');
+      badge.className = 'ev';
+      cell.appendChild(badge);
+      wall.appendChild(cell);
+    }
+  }
+
+  _renderCam(force) {
+    const sr = this.shadowRoot;
+    if (!sr || !this._hass) return;
+    const st = this._hass.states;
+    const ids = camIds(st);
+    const key = ids.join(',');
+    const stat = sr.getElementById('cam-modal-status');
+    if (stat) stat.textContent = camSummary(st).t;
+
+    if (force || key !== this._camKey) {
+      this._camKey = key;
+      this._buildCamWall(ids);
+    } else if (this._camCards) {
+      this._camCards.forEach(c => { c.hass = this._hass; });
+    }
+
+    const wall = sr.getElementById('cam-wall');
+    if (wall) {
+      const cells = wall.querySelectorAll('.cam-cell');
+      ids.forEach((id, i) => {
+        const cell = cells[i];
+        if (!cell) return;
+        const a = camAlerts(st, id);
+        cell.classList.toggle('alert', a.length > 0);
+        const b = cell.querySelector('.ev');
+        if (b) { b.textContent = a.length ? a.join(' + ') : ''; b.style.display = a.length ? 'block' : 'none'; }
+      });
+    }
+
+    const nvr = sr.getElementById('cam-nvr');
+    if (nvr) {
+      const hdd = (st[CAM_HDD] && st[CAM_HDD].state) || '--';
+      nvr.classList.toggle('bad', hdd !== 'OK');
+      const v = nvr.querySelector('.v');
+      if (v) v.textContent = hdd;
+    }
+    const ba = sr.getElementById('cam-btn-alarm');
+    if (ba) ba.classList.toggle('active', !!(st[CAM_ALARM] && st[CAM_ALARM].state === 'on'));
+    const bh = sr.getElementById('cam-btn-holiday');
+    if (bh) bh.classList.toggle('active', !!(st[CAM_HOLIDAY] && st[CAM_HOLIDAY].state === 'on'));
+  }
+
+  _renderVacConsum() {
+    const box = this.shadowRoot && this.shadowRoot.getElementById('vac-consum-rows');
+    if (!box || !this._hass) return;
+    const st = this._hass.states;
+    const consum = [
+      ['Spazzola principale', VAC_P + 'main_brush_left'],
+      ['Spazzola laterale', VAC_P + 'side_brush_left'],
+      ['Filtro', VAC_P + 'filter_left'],
+      ['Panno', VAC_P + 'mop_pad_left'],
+    ].filter(([, id]) => st[id] && !isNaN(parseFloat(st[id].state)));
+    box.innerHTML = consum.map(([n, id]) => {
+      const pct = Math.max(0, Math.min(100, parseFloat(st[id].state)));
+      return `<div class="vac-consum-row"><span class="n">${n}</span><span class="b"><i style="width:${pct}%"></i></span><span class="p">${Math.round(pct)}%</span></div>`;
+    }).join('');
+  }
+
+  _renderVacMap(force) {
+    const box = this.shadowRoot && this.shadowRoot.getElementById('vac-map');
+    if (!box || !this._hass) return;
+    const cam = this._hass.states[VAC_MAP];
+    if (!cam || !cam.attributes.entity_picture) {
+      box.classList.add('empty');
+      box.innerHTML = 'Mappa non disponibile';
+      this._vacMapPic = null;
+      return;
+    }
+    const pic = cam.attributes.entity_picture;
+    if (!force && pic === this._vacMapPic) return;
+    this._vacMapPic = pic;
+    box.classList.remove('empty');
+    const ts = (cam.state || '').split(' ')[1] || '';
+    const img = box.querySelector('img');
+    if (img) {
+      img.src = pic;
+      const t = box.querySelector('.ts');
+      if (t) t.textContent = ts;
+    } else {
+      box.innerHTML = `<img alt="Mappa MAFALDA" src="${pic}" /><span class="ts">${ts}</span>`;
     }
   }
 
@@ -854,7 +1313,7 @@ class CasaDashboardCard extends HTMLElement {
         chips.push(`<div class="chip"><ha-icon icon="${icon}"></ha-icon>${label} ${t}</div>`);
       }
     }
-    const updatesOn = UPDATE_ENTITIES.filter(id => states[id] && states[id].state === 'on').length;
+    const updatesOn = Object.keys(states).filter(id => id.startsWith('update.') && states[id].state === 'on').length;
     if (updatesOn > 0) {
       chips.push(`<div class="chip warn"><ha-icon icon="mdi:cloud-download-outline"></ha-icon>${updatesOn} aggiornament${updatesOn === 1 ? 'o' : 'i'}</div>`);
     }
@@ -941,7 +1400,7 @@ class CasaDashboardCard extends HTMLElement {
     /* ---- sistema ---- */
     const sysUpdatesEl = sh.getElementById('sys-updates');
     if (sysUpdatesEl) {
-      const n = UPDATE_ENTITIES.filter(id => states[id] && states[id].state === 'on').length;
+      const n = Object.keys(states).filter(id => id.startsWith('update.') && states[id].state === 'on').length;
       sysUpdatesEl.textContent = n > 0 ? `${n}` : 'OK';
       sysUpdatesEl.className = `sys-val mono ${n > 0 ? 'warn' : 'ok'}`;
     }
@@ -964,6 +1423,42 @@ class CasaDashboardCard extends HTMLElement {
       if (backupValEl) {
         backupValEl.textContent = configured ? relTime(backupSt.state) : '--';
         backupValEl.className = `sys-val mono ${configured ? 'ok' : 'warn'}`;
+      }
+    }
+
+    /* ---- videosorveglianza ---- */
+    {
+      const cs = camSummary(states);
+      const csub = sh.getElementById('sys-cam-sub');
+      if (csub) csub.textContent = cs.t;
+      const cic = sh.getElementById('sys-cam-icon');
+      if (cic) cic.setAttribute('icon', cs.n ? 'mdi:cctv-off' : 'mdi:cctv');
+      const cval = sh.getElementById('sys-cam-val');
+      if (cval) {
+        cval.textContent = cs.v;
+        cval.className = `sys-val mono ${cs.c === 'bad' ? 'danger' : cs.c === 'warn' ? 'warn' : 'ok'}`;
+      }
+      const cm = sh.getElementById('cam-modal');
+      if (cm && cm.classList.contains('show')) this._renderCam(false);
+    }
+
+    /* ---- MAFALDA ---- */
+    {
+      const sum = vacSummary(states);
+      const sub = sh.getElementById('sys-vac-sub');
+      if (sub) sub.textContent = sum.t;
+      const ic = sh.getElementById('sys-vac-icon');
+      if (ic) ic.setAttribute('icon', sum.i);
+      const val = sh.getElementById('sys-vac-val');
+      const bat = states[VAC_BATTERY] && states[VAC_BATTERY].state;
+      if (val) {
+        val.textContent = bat ? bat + '%' : '--';
+        val.className = `sys-val mono ${sum.c === 'danger' ? 'danger' : sum.c === 'warn' ? 'warn' : (bat && Number(bat) >= 30 ? 'ok' : 'warn')}`;
+      }
+      const ms = sh.getElementById('vac-modal-status');
+      if (ms && sh.getElementById('vac-modal').classList.contains('show')) {
+        ms.textContent = sum.t;
+        this._renderVacMap(false);
       }
     }
 
